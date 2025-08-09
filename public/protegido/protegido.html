@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Reto 3 - Seguridad y Auditoría</title>
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <div class="container">
+    <h1>Reto 3</h1>
+    <h2>Seguridad y Auditoría de Sistemas</h2>
+    <h3>Décimo Ciclo - 2025</h3>
+    <p class="slogan">Ingeniería en Sistemas te cambia la vida</p>
+
+    <div id="usuarioBox" class="user-box" style="margin:16px 0;"></div>
+    <div style="margin: 16px 0;">
+        <a href="/reto3/seguridad/umg2025/2fa.html">Habilitar 2FA</a>
+    </div>
+
+    <button id="cerrarSesion" type="button">Cerrar sesión</button>
+  </div>
+
+  <script>
+    // 1) Si venimos del callback con #token=..., guardarlo y limpiar el hash
+    (function () {
+      const match = location.hash.match(/token=([^&]+)/);
+      if (match) {
+        const token = decodeURIComponent(match[1]);
+        localStorage.setItem('token', token);
+        history.replaceState(null, '', location.pathname); // quita el # del URL
+      }
+    })();
+
+    // Helpers para JWT
+    function parseJwt(t) {
+      try {
+        const base64Url = t.split('.')[1];
+        const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
+        const jsonPayload = decodeURIComponent(atob(base64).split('').map(function(c) {
+          return '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2);
+        }).join(''));
+        return JSON.parse(jsonPayload);
+      } catch {
+        return null;
+      }
+    }
+
+    function isTokenValid(t) {
+      const payload = parseJwt(t);
+      if (!payload || !payload.exp) return false;
+      const now = Date.now() / 1000;
+      return payload.exp > now;
+    }
+
+    // 2) Verificar token (si no existe o está vencido, volver al login)
+    const token = localStorage.getItem('token');
+    if (!token || !isTokenValid(token)) {
+      localStorage.removeItem('token');
+      window.location.href = "/reto3/seguridad/umg2025";
+    } else {
+      // 3) Mostrar info básica del usuario (si viene en el JWT)
+      const payload = parseJwt(token);
+      const nombre = payload?.name || payload?.nombre || '';
+      const correo = payload?.email || payload?.correo || '';
+      const box = document.getElementById('usuarioBox');
+      box.textContent = nombre
+        ? `Bienvenido, ${nombre}${correo ? ' (' + correo + ')' : ''}`
+        : (correo ? `Bienvenido, ${correo}` : 'Bienvenido');
+    }
+
+    // 4) Cerrar sesión (logout completo: Microsoft + limpiar token al volver)
+    document.getElementById('cerrarSesion').addEventListener('click', () => {
+      // El backend redirige a Microsoft Logout y luego a /logout-done,
+      // donde se limpia el localStorage y se vuelve al inicio.
+      window.location.href = '/logout';
+    });
+  </script>
+</body>
+</html>

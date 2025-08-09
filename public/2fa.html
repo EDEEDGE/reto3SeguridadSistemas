@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="utf-8" />
+  <title>Habilitar 2FA (TOTP)</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <style>
+    body { font-family: system-ui, Arial, sans-serif; margin: 24px; }
+    .card { max-width: 520px; margin: 0 auto; padding: 20px; border: 1px solid #ddd; border-radius: 12px; }
+    .actions { display: flex; gap: 8px; margin-top: 12px; }
+    button { padding: 10px 14px; border: 0; border-radius: 8px; cursor: pointer; }
+    .primary { background: #2563eb; color: white; }
+    .ghost { background: #f5f5f5; }
+    #qrWrap img { width: 220px; height: 220px; image-rendering: pixelated; }
+    .muted { color: #666; font-size: 12px; }
+    input { width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 8px; }
+    label { display: block; margin: 12px 0 6px; }
+  </style>
+</head>
+<body>
+  <div class="card">
+    <h2>Habilitar 2FA (Microsoft / Google Authenticator)</h2>
+    <p class="muted">Escanea el código QR con tu app de autenticación y luego ingresa el código de 6 dígitos para activarlo.</p>
+
+    <div class="actions">
+      <button id="btnEnroll" class="primary" type="button">Generar QR</button>
+      <button id="btnVolver" class="ghost" type="button">Volver al panel</button>
+    </div>
+
+    <div id="qrWrap" style="margin:16px 0;"></div>
+
+    <div id="confirmWrap" style="display:none;">
+      <label for="code2fa">Código de 6 dígitos</label>
+      <input id="code2fa" placeholder="123456" inputmode="numeric" maxlength="6" />
+      <div class="actions">
+        <button id="btnConfirm" class="primary" type="button">Confirmar 2FA</button>
+      </div>
+    </div>
+
+    <p id="msg" class="muted"></p>
+  </div>
+
+  <script>
+    const API_BASE = '/reto3/seguridad/umg2025';
+
+    // Si no hay token, vuelve al login
+    const token = localStorage.getItem('token');
+    if (!token) {
+      location.href = API_BASE;
+    }
+
+    const btnEnroll = document.getElementById('btnEnroll');
+    const btnConfirm = document.getElementById('btnConfirm');
+    const btnVolver = document.getElementById('btnVolver');
+    const qrWrap = document.getElementById('qrWrap');
+    const confirmWrap = document.getElementById('confirmWrap');
+    const msg = document.getElementById('msg');
+
+    btnVolver.addEventListener('click', () => {
+      location.href = API_BASE + '/protegido/protegido.html';
+    });
+
+    // 1) Generar secreto y QR
+    btnEnroll.addEventListener('click', async () => {
+      msg.textContent = '';
+      qrWrap.innerHTML = '';
+      confirmWrap.style.display = 'none';
+
+      try {
+        const res = await fetch(API_BASE + '/2fa/enroll', {
+          method: 'POST',
+          headers: { 'Authorization': 'Bearer ' + token }
+        });
+        const data = await res.json();
+        if (!res.ok) {
+          msg.textContent = data.mensaje || 'No se pudo generar el QR.';
+          return;
+        }
+        // Mostrar QR y clave manual
+        qrWrap.innerHTML = `
+          <img src="${data.qrDataUrl}" alt="QR 2FA" />
+          <div class="muted">Clave manual (por si no puedes escanear): <b>${data.manualKey}</b></div>
+        `;
+        confirmWrap.style.display = 'block';
+        msg.textContent = 'Escanea el QR con Microsoft/Google Authenticator y luego ingresa el código.';
+      } catch (e) {
+        console.error(e);
+        msg.textContent = 'Error de conexión.';
+      }
+    });
+
+    // 2) Confirmar 2FA con el código TOTP
+    btnConfirm.addEventListener('click', async () => {
+      msg.textContent = '';
+      const code = document.getElementById('code2fa').value.trim();
+      if (!code) {
+        msg.textContent = 'Ingresa el código de 6 dígitos.';
+        return;
+      }
+      try {
+        const res = await fetch(API_BASE + '/2fa/confirm', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': 'Bearer ' + token
+          },
+          body: JSON.stringify({ code })
+        });
+        const data = await res.json();
+        if (!res.ok) {
+          msg.textContent = data.mensaje || 'Código inválido.';
+          return;
+        }
+        alert('2FA activado correctamente. En el próximo inicio de sesión se te pedirá el código.');
+        location.href = API_BASE + '/protegido/protegido.html';
+      } catch (e) {
+        console.error(e);
+        msg.textContent = 'Error de conexión.';
+      }
+    });
+  </script>
+</body>
+</html>
