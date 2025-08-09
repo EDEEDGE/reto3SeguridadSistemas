@@ -74,7 +74,7 @@ async function login(req, res, next) {
 
     // Si NO tiene 2FA -> emitir JWT como siempre (ahora con name para tu UI)
     const token = jwt.sign(
-      { id: encontrarCorreo.id, correo: encontrarCorreo.correo, name: encontrarCorreo.nombre },
+      { id: encontrarCorreo.id, correo: encontrarCorreo.correo, name: encontrarCorreo.nombre, prov: 'local' },
       JWT_SECRET,
       { expiresIn: '1d' }
     );

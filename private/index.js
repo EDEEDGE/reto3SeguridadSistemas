@@ -28,6 +28,17 @@ app.use(oauthRutas);
 const rutas2fa = require('./routes/2FArutas');
 app.use('/reto3/seguridad/umg2025', rutas2fa);
 
+//logout para sesiones locales 
+app.get('/logout', (req, res) => {
+  res.redirect('/reto3/seguridad/umg2025/logout-done');
+});
+
+
+//no mostrar la pagina protegida
+app.use('/reto3/seguridad/umg2025/protegido', (req, res, next) => {
+  res.set('Cache-Control', 'no-store');
+  next();
+});
 
 const cookieParser = require('cookie-parser');
 app.use(cookieParser());

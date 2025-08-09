@@ -69,11 +69,20 @@
         : (correo ? `Bienvenido, ${correo}` : 'Bienvenido');
     }
 
-    // 4) Cerrar sesión (logout completo: Microsoft + limpiar token al volver)
+    // 4) Cerrar sesión:
+    //    - Si el token dice prov:'azure' -> ir a /auth/azure/logout (cierra sesión en Microsoft)
+    //    - Si no, logout local -> /logout (lleva a /logout-done y limpia el token)
     document.getElementById('cerrarSesion').addEventListener('click', () => {
-      // El backend redirige a Microsoft Logout y luego a /logout-done,
-      // donde se limpia el localStorage y se vuelve al inicio.
-      window.location.href = '/logout';
+      const t = localStorage.getItem('token');
+      const p = t ? parseJwt(t) : null;
+      const prov = p?.prov;
+
+      if (prov === 'azure') {
+        window.location.href = '/auth/azure/logout';
+      } else {
+        try { localStorage.removeItem('token'); } catch {}
+        window.location.href = '/logout';
+      }
     });
   </script>
 </body>
