@@ -81,7 +81,7 @@ async function verificar2FAyEmitirJWT(req, res, next) {
     if (!ok) return res.status(401).json({ mensaje: 'Codigo 2FA invalido' });
 
     const token = jwt.sign(
-      { id: usuario.id, correo: usuario.correo, name: usuario.nombre },
+      { id: usuario.id, correo: usuario.correo, name: usuario.nombre, prov: 'local' },
       JWT_SECRET,
       { expiresIn: '1d' }
     );

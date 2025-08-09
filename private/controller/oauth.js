@@ -88,7 +88,8 @@ async function callback(req, res, next) {
             {
                 id: usuarioexiste.id,
                 correo: usuarioexiste.correo,
-                name: usuarioexiste.nombre 
+                name: usuarioexiste.nombre,
+                prov: 'azure' 
             },
             JWT_SECRET,
             {
