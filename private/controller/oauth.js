@@ -108,7 +108,7 @@ async function callback(req, res, next) {
 function logout(req, res) {
   res.redirect('/reto3/seguridad/umg2025');
 }*/
-
+/*
 function logout(req, res){
     //volver a cargar usuario
     const tenant = process.env.AZURE_TENANT_ID;
@@ -119,7 +119,18 @@ function logout(req, res){
     const msLogoutUrl = `https://login.microsoftonline.com/common/oauth2/v2.0/logout?post_logout_redirect_uri=${logouturl}`;
     res.redirect(msLogoutUrl);
 }
+*/
 
+function logout(req, res){
+    //volver a cargar usuario
+    const tenant = process.env.AZURE_TENANT_ID;
+
+    //pagina donde se regresara despues del logout
+    const logouturl = encodeURIComponent(`https://${process.env.PUBLIC_BASE_URL}/reto3/seguridad/umg2025/logout-done`);
+
+    const msLogoutUrl = `https://login.microsoftonline.com/common/oauth2/v2.0/logout?post_logout_redirect_uri=${logouturl}`;
+    res.redirect(msLogoutUrl);
+}
 
 module.exports = {
     loginAzure,
