@@ -1,0 +1,11 @@
+{
+  "name": "reto3oath-root",
+  "private": true,
+  "engines": { "node": ">=20" },
+  "scripts": {
+    "postinstall": "npm --prefix private ci && npx --prefix private prisma generate",
+    "start": "node private/index.js",
+    "build": "npm --prefix private run build --if-present",
+    "test": "npm --prefix private test --if-present"
+  }
+}
