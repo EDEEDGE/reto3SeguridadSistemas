@@ -3,7 +3,7 @@
   "private": true,
   "engines": { "node": ">=20" },
   "scripts": {
-    "postinstall": "npm --prefix private ci && npx --prefix private prisma generate",
+    "postinstall": "npm --prefix private ci && npx --prefix private prisma generate --schema=private/prisma/schema.prisma",
     "start": "node private/index.js",
     "build": "npm --prefix private run build --if-present",
     "test": "npm --prefix private test --if-present"
