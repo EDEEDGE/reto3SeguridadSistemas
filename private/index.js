@@ -26,7 +26,7 @@ app.use(oauthRutas);
 
 //rutas 2fa
 const rutas2fa = require('./routes/2FArutas');
-app.use('/reto3/seguridad/umg2025', rutas2fa)
+app.use('/reto3/seguridad/umg2025', rutas2fa);
 
 
 const cookieParser = require('cookie-parser');
