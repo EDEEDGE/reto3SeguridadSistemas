@@ -21,23 +21,28 @@ jobs:
           cache: 'npm'
           cache-dependency-path: private/package-lock.json
 
-      # Instalamos dependencias del backend (carpeta private) y generamos prisma
+      # Instalar deps en /private y generar Prisma (quedarán dentro del ZIP)
       - name: Install deps & prisma generate (server)
         working-directory: ./private
         run: |
           npm ci
           npx prisma generate
 
-      # (Opcional) si tuvieras build/test en el backend
       - name: Build (if present)
         working-directory: ./private
         run: npm run build --if-present
+
+      # 👉 Empaquetar TODO el repo en un ZIP (incluye private/node_modules)
+      - name: Create deployment zip
+        run: |
+          mkdir -p artifact
+          zip -r artifact/app.zip . -x ".git/*"
 
       - name: Upload artifact for deployment
         uses: actions/upload-artifact@v4
         with:
           name: node-app
-          path: .   # subimos todo el repo (private + public)
+          path: artifact/app.zip
 
   deploy:
     runs-on: ubuntu-latest
@@ -51,6 +56,7 @@ jobs:
         uses: actions/download-artifact@v4
         with:
           name: node-app
+          path: artifact
 
       - name: Login to Azure
         uses: azure/login@v2
@@ -59,10 +65,9 @@ jobs:
           tenant-id: ${{ secrets.AZUREAPPSERVICE_TENANTID_1907D44350904634A154718A7D652FCB }}
           subscription-id: ${{ secrets.AZUREAPPSERVICE_SUBSCRIPTIONID_3B8045F7F0C84B32BEEED281268D4274 }}
 
-      # Desplegamos el repo completo. El Startup Command en Azure hará `cd private && npm ci && npx prisma generate && npm start`
       - name: Deploy to Azure Web App
         uses: azure/webapps-deploy@v3
         with:
           app-name: 'reto3oath'
           slot-name: 'Production'
-          package: .
+          package: artifact/app.zip
